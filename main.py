@@ -2,19 +2,13 @@ import imaplib
 import email
 import os
 import json
+import sys
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(script_dir, "login.json")
 with open(file_path) as f:
     d = f.read()
     login_credentials = json.loads(d)
-
-imap = imaplib.IMAP4_SSL("imap.gmail.com")
-
-imap.login(login_credentials["email"], password =  login_credentials["imap_pass"])
-
-imap.select('"INBOX"')
-status, messages = imap.search(None, 'ALL')
 
 class ansicolors:
     HEADER = '\033[95m'
@@ -26,14 +20,30 @@ class ansicolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+imap = imaplib.IMAP4_SSL("imap.gmail.com")
+
+try:
+    imap.login(login_credentials["email"], password =  login_credentials["imap_pass"])
+except:
+    print(f"{ansicolors.FAIL}Login Credentials are incorrect. Please check your credentials and run the script again.{ansicolors.ENDC}")
+    sys.exit()
+
+imap.select('"INBOX"')
+status, messages = imap.search(None, 'ALL')
+
 print("---------------------------")
-print("""Welcome to emailcli. Here are the commands:
-Enter: Show the current page again. Default is 1.
-x: Next page
-z: Previous page
-q: exit the programme
-Number: Go to specified page""")
-print("---------------------------")
+
+def commands():
+    print("""Welcome to emailcli. Here are the commands:
+    c: Shows commands.
+    Enter: Show the current page again. Default is 1.
+    x: Next page
+    z: Previous page
+    q: exit the programme
+    Number: Go to specified page""")
+    print("---------------------------")
+commands()
 
 def await_input():
     return input("Enter command:")
@@ -50,36 +60,51 @@ def print_results():
         page = page - 1
     elif input == "z" and page == 1:
         pass
+    elif input == "c":
+        commands()
+        print_results()
     elif input == "":
         pass
     elif input == "q":
-        return
+        print("Logged Out!")
+        imap.logout()
+        print("---------------------------")
+        sys.exit()
     else:
-        page = int(input)
+        try:
+            page = int(input)
+        except:
+            print(f"{ansicolors.FAIL}'{input}' command not found.{ansicolors.ENDC}")
+            print("---------------------------")
+            print_results()
     start = page * 5 - 4
     end = page * 5 + 1
-    for i in range(start, end):
-        num = messages[0].split()[::-1][i-1]
+    try:
+        for i in range(start, end):
+            num = messages[0].split()[::-1][i-1]
 
-        _, msg = imap.fetch(num, "(RFC822)")
-        message = email.message_from_bytes(msg[0][1])
+            _, msg = imap.fetch(num, "(RFC822)")
+            message = email.message_from_bytes(msg[0][1])
 
-        subject_header = message['Subject']
-        decoded_subject = email.header.decode_header(subject_header)
-        subject = decoded_subject[0][0]
-        message_id = message['Message-ID']
-        gmail_link = f"https://mail.google.com/mail/u/0/#search/rfc822msgid:{message_id[1:-1]}"
+            subject_header = message['Subject']
+            decoded_subject = email.header.decode_header(subject_header)
+            subject = decoded_subject[0][0]
+            message_id = message['Message-ID']
+            gmail_link = f"https://mail.google.com/mail/u/0/#search/rfc822msgid:{message_id[1:-1]}"
 
-        if isinstance(subject, bytes):
-            subject = subject.decode("utf-8")
+            if isinstance(subject, bytes):
+                subject = subject.decode("utf-8")
 
-        print(f"{ansicolors.HEADER}Subject:{ansicolors.ENDC}", ansicolors.WARNING + subject+ ansicolors.ENDC)
-        print(f"{ansicolors.UNDERLINE}From:{ansicolors.ENDC}", message["From"])
-        print(f"{ansicolors.UNDERLINE}Date:{ansicolors.ENDC}", message["Date"])
-        print(f"{ansicolors.UNDERLINE}Gmail Link:{ansicolors.ENDC}", ansicolors.OKCYAN + gmail_link + ansicolors.ENDC)
-        print("---------------------------")
+            print(f"{ansicolors.HEADER}Subject:{ansicolors.ENDC}", ansicolors.WARNING + subject+ ansicolors.ENDC)
+            print(f"{ansicolors.UNDERLINE}From:{ansicolors.ENDC}", message["From"])
+            print(f"{ansicolors.UNDERLINE}Date:{ansicolors.ENDC}", message["Date"])
+            print(f"{ansicolors.UNDERLINE}Gmail Link:{ansicolors.ENDC}", ansicolors.OKCYAN + gmail_link + ansicolors.ENDC)
+            print("---------------------------")
+    except:
+        print(f"{ansicolors.FAIL}The number of page you just entered doesn't exist. Please provide another one!{ansicolors.ENDC}")
     print_results()
-        
+    print("---------------------------")
+
 print_results()
 
 print("Logged Out!")
