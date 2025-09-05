@@ -6,7 +6,7 @@ import sys
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(script_dir, "login.json")
-with open(file_path) as f:
+with open(file_path, "r", encoding="utf-8") as f:
     d = f.read()
     login_credentials = json.loads(d)
 
@@ -21,13 +21,37 @@ class ansicolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+print(login_credentials["email"][-10:])
+
+def get_credentials():
+    mail = input("please Enter your Gmail adress: ")
+    if mail[-10:] != "@gmail.com":
+        print(f"{ansicolors.FAIL}The mail you just entered is not valid. Currently we support only Gmail acoounts.{ansicolors.ENDC}")
+        return get_credentials()
+    login_credentials["email"] = mail
+    pw = input("Please enter your IMAP password: ")
+    if not pw:
+        return get_credentials()
+    login_credentials["imap_pass"] = pw
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(login_credentials, f, ensure_ascii=False, indent=4)
+    try:
+        imap.login(login_credentials["email"], password = login_credentials["imap_pass"])
+    except:
+        print(f"{ansicolors.FAIL}Login Credentials are incorrect. again. Make sure you are using a gmail account and a valid app password (From https://myaccount.google.com/apppasswords).{ansicolors.ENDC}")
+        get_credentials()
+
+if login_credentials["email"] == "":
+    print(f"{ansicolors.FAIL}You have not entered your email credentials.{ansicolors.ENDC}")
+    get_credentials()
+
 imap = imaplib.IMAP4_SSL("imap.gmail.com")
 
 try:
-    imap.login(login_credentials["email"], password =  login_credentials["imap_pass"])
+    imap.login(login_credentials["email"], password = login_credentials["imap_pass"])
 except:
-    print(f"{ansicolors.FAIL}Login Credentials are incorrect. Please check your credentials and run the script again.{ansicolors.ENDC}")
-    sys.exit()
+    print(f"{ansicolors.FAIL}Login Credentials are incorrect. again. Make sure you are using a gmail account and a valid app password (From https://myaccount.google.com/apppasswords).{ansicolors.ENDC}")
+    get_credentials()
 
 imap.select('"INBOX"')
 status, messages = imap.search(None, 'ALL')
