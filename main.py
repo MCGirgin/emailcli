@@ -62,9 +62,10 @@ def commands():
     print("""Welcome to emailcli. Here are the commands:
     c: Shows commands.
     Enter: Show the current page again. Default is 1.
+    r: Reloads the pages
     x: Next page
     z: Previous page
-    q: exit the programme
+    q: exit the program
     Number: Go to specified page""")
     print("---------------------------")
 commands()
@@ -76,6 +77,8 @@ page = 1
 
 def print_results():
     global page
+    global status
+    global messages
     input = await_input()
     print("---------------------------")
     if input == "x":
@@ -84,6 +87,9 @@ def print_results():
         page = page - 1
     elif input == "z" and page == 1:
         pass
+    elif input == "r":
+        imap.select('"INBOX"')
+        status, messages = imap.search(None, 'ALL')
     elif input == "c":
         commands()
         print_results()
