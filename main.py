@@ -21,7 +21,7 @@ class ansicolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-print(login_credentials["email"][-10:])
+imap = imaplib.IMAP4_SSL("imap.gmail.com")
 
 def get_credentials():
     mail = input("please Enter your Gmail adress: ")
@@ -44,8 +44,6 @@ def get_credentials():
 if login_credentials["email"] == "":
     print(f"{ansicolors.FAIL}You have not entered your email credentials.{ansicolors.ENDC}")
     get_credentials()
-
-imap = imaplib.IMAP4_SSL("imap.gmail.com")
 
 try:
     imap.login(login_credentials["email"], password = login_credentials["imap_pass"])
@@ -139,4 +137,4 @@ print_results()
 
 print("Logged Out!")
 imap.logout()
-print("---------------------------")
+print("---------------------------") 
