@@ -5,10 +5,10 @@ import json
 import sys
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(script_dir, "login.json")
+file_path = os.path.join(script_dir, "data.json")
 with open(file_path, "r", encoding="utf-8") as f:
     d = f.read()
-    login_credentials = json.loads(d)
+    data = json.loads(d)
 
 class ansicolors:
     HEADER = '\033[95m'
@@ -23,33 +23,34 @@ class ansicolors:
 
 imap = imaplib.IMAP4_SSL("imap.gmail.com")
 
-def get_credentials():
+def get_data():
     mail = input("please Enter your Gmail adress: ")
     if mail[-10:] != "@gmail.com":
         print(f"{ansicolors.FAIL}The mail you just entered is not valid. Currently we support only Gmail acoounts.{ansicolors.ENDC}")
-        return get_credentials()
-    login_credentials["email"] = mail
+        return get_data()
+    data["email"] = mail
     pw = input("Please enter your IMAP password: ")
     if not pw:
-        return get_credentials()
-    login_credentials["imap_pass"] = pw
+        return get_data()
+    data["imap_pass"] = pw
     with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(login_credentials, f, ensure_ascii=False, indent=4)
+        json.dump(data, f, ensure_ascii=False, indent=4)
     try:
-        imap.login(login_credentials["email"], password = login_credentials["imap_pass"])
+        imap.login(data["email"], password = data["imap_pass"])
     except:
         print(f"{ansicolors.FAIL}Login Credentials are incorrect. again. Make sure you are using a gmail account and a valid app password (From https://myaccount.google.com/apppasswords).{ansicolors.ENDC}")
-        get_credentials()
+        return get_data()
 
-if login_credentials["email"] == "":
+if data["email"] == "":
     print(f"{ansicolors.FAIL}You have not entered your email credentials.{ansicolors.ENDC}")
-    get_credentials()
+    get_data()
+else:
+    try:
+        imap.login(data["email"], password = data["imap_pass"])
+    except:
+        print(f"{ansicolors.FAIL}Login Credentials are incorrect. again. Make sure you are using a gmail account and a valid app password (From https://myaccount.google.com/apppasswords).{ansicolors.ENDC}")
+        get_data()
 
-try:
-    imap.login(login_credentials["email"], password = login_credentials["imap_pass"])
-except:
-    print(f"{ansicolors.FAIL}Login Credentials are incorrect. again. Make sure you are using a gmail account and a valid app password (From https://myaccount.google.com/apppasswords).{ansicolors.ENDC}")
-    get_credentials()
 
 imap.select('"INBOX"')
 status, messages = imap.search(None, 'ALL')
@@ -64,6 +65,7 @@ def commands():
     x: Next page
     z: Previous page
     q: exit the program
+    mpp <number>: Sets the number of mails will be shown per page.
     Number: Go to specified page""")
     print("---------------------------")
 commands()
@@ -98,6 +100,21 @@ def print_results():
         imap.logout()
         print("---------------------------")
         sys.exit()
+    elif input[:3] == "mpp":
+        try:
+            input = input.split()
+        except:
+            print(f"{ansicolors.FAIL}Unexpected command. Example usage 'mpp 5'.{ansicolors.ENDC}")
+            print("---------------------------")
+            return print_results()
+        try:
+            data["mails_per_page"] = int(input[1])
+        except:
+            print(f"{ansicolors.FAIL}Unexpected command. Example usage 'mpp 5'.{ansicolors.ENDC}")
+            print("---------------------------")
+            return print_results()
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
     else:
         try:
             page = int(input)
@@ -105,8 +122,9 @@ def print_results():
             print(f"{ansicolors.FAIL}'{input}' command not found.{ansicolors.ENDC}")
             print("---------------------------")
             print_results()
-    start = page * 5 - 4
-    end = page * 5 + 1
+    
+    start = page * data["mails_per_page"] - (data["mails_per_page"] - 1)
+    end = page * data["mails_per_page"] + 1
     try:
         for i in range(start, end):
             num = messages[0].split()[::-1][i-1]

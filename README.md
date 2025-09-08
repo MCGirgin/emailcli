@@ -31,6 +31,7 @@ That's it! Now tou need a gmail adress and app password. You can get your app pa
     x: Next page
     z: Previous page
     q: exit the program
+    mpp <number>: Sets the number of mails will be shown per page.
     Number: Go to specified page
 ```
 
