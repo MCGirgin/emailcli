@@ -22,7 +22,7 @@ python main.py
 
 That's it! Now tou need a gmail adress and app password. You can get your app password from [here](https://myaccount.google.com/apppasswords).
 
-### Commands
+## Commands
 
 ```
     c: Shows commands.

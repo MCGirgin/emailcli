@@ -23,6 +23,16 @@ class ansicolors:
 
 imap = imaplib.IMAP4_SSL("imap.gmail.com")
 
+def print_line():
+    print("---------------------------")
+
+def try_login():
+    try:
+        imap.login(data["email"], password = data["imap_pass"])
+    except:
+        print(f"{ansicolors.FAIL}Login Credentials are incorrect. again. Make sure you are using a gmail account and a valid app password (From https://myaccount.google.com/apppasswords).{ansicolors.ENDC}")
+        return get_data()
+
 def get_data():
     mail = input("please Enter your Gmail adress: ")
     if mail[-10:] != "@gmail.com":
@@ -35,27 +45,19 @@ def get_data():
     data["imap_pass"] = pw
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-    try:
-        imap.login(data["email"], password = data["imap_pass"])
-    except:
-        print(f"{ansicolors.FAIL}Login Credentials are incorrect. again. Make sure you are using a gmail account and a valid app password (From https://myaccount.google.com/apppasswords).{ansicolors.ENDC}")
-        return get_data()
+    try_login()
 
 if data["email"] == "":
     print(f"{ansicolors.FAIL}You have not entered your email credentials.{ansicolors.ENDC}")
     get_data()
 else:
-    try:
-        imap.login(data["email"], password = data["imap_pass"])
-    except:
-        print(f"{ansicolors.FAIL}Login Credentials are incorrect. again. Make sure you are using a gmail account and a valid app password (From https://myaccount.google.com/apppasswords).{ansicolors.ENDC}")
-        get_data()
+    try_login()
 
 
 imap.select('"INBOX"')
 status, messages = imap.search(None, 'ALL')
 
-print("---------------------------")
+print_line()
 
 def commands():
     print("""Welcome to emailcli. Here are the commands:
@@ -67,7 +69,7 @@ def commands():
     q: exit the program
     mpp <number>: Sets the number of mails will be shown per page.
     Number: Go to specified page""")
-    print("---------------------------")
+    print_line()
 commands()
 
 def await_input():
@@ -80,7 +82,7 @@ def print_results():
     global status
     global messages
     input = await_input()
-    print("---------------------------")
+    print_line()
     if input == "x":
         page = page + 1
     elif input == "z" and page != 1:
@@ -98,20 +100,20 @@ def print_results():
     elif input == "q":
         print("Logged Out!")
         imap.logout()
-        print("---------------------------")
+        print_line()
         sys.exit()
     elif input[:3] == "mpp":
         try:
             input = input.split()
         except:
             print(f"{ansicolors.FAIL}Unexpected command. Example usage 'mpp 5'.{ansicolors.ENDC}")
-            print("---------------------------")
+            print_line()
             return print_results()
         try:
             data["mails_per_page"] = int(input[1])
         except:
             print(f"{ansicolors.FAIL}Unexpected command. Example usage 'mpp 5'.{ansicolors.ENDC}")
-            print("---------------------------")
+            print_line()
             return print_results()
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
@@ -120,7 +122,7 @@ def print_results():
             page = int(input)
         except:
             print(f"{ansicolors.FAIL}'{input}' command not found.{ansicolors.ENDC}")
-            print("---------------------------")
+            print_line()
             print_results()
     
     start = page * data["mails_per_page"] - (data["mails_per_page"] - 1)
@@ -145,14 +147,14 @@ def print_results():
             print(f"{ansicolors.UNDERLINE}From:{ansicolors.ENDC}", message["From"])
             print(f"{ansicolors.UNDERLINE}Date:{ansicolors.ENDC}", message["Date"])
             print(f"{ansicolors.UNDERLINE}Gmail Link:{ansicolors.ENDC}", ansicolors.OKCYAN + gmail_link + ansicolors.ENDC)
-            print("---------------------------")
+            print_line()
     except:
         print(f"{ansicolors.FAIL}The number of page you just entered doesn't exist. Please provide another one!{ansicolors.ENDC}")
     print_results()
-    print("---------------------------")
+    print_line()
 
 print_results()
 
 print("Logged Out!")
 imap.logout()
-print("---------------------------") 
+print_line()
