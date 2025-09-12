@@ -70,6 +70,7 @@ def commands():
     mpp <number>: Sets the number of mails will be shown per page.
     Number: Go to specified page""")
     print_line()
+    return
 commands()
 
 def await_input():
@@ -88,10 +89,6 @@ def previous_page():
 def reload():
     imap.select('"INBOX"')
     status, messages = imap.search(None, 'ALL')
-
-def commands():
-    commands()
-    print_results()
 
 def space():
     pass
@@ -123,7 +120,6 @@ actions = {
     "z": previous_page,
     "r": reload,
     "q": logout,
-    "c": commands,
     "": space
 }
 
@@ -135,6 +131,9 @@ def print_results():
     print_line()
     if input[:3] == "mpp":
         mails_per_page(input)
+    elif input == "c":
+        commands()
+        return print_results()
     elif input in actions:
         actions[input]()
     else:
@@ -143,7 +142,7 @@ def print_results():
         except:
             print(f"{color.RED}'{input}' command not found.{color.END}")
             print_line()
-            print_results()
+            return print_results()
     
     start = page * data["mails_per_page"] - (data["mails_per_page"] - 1)
     end = page * data["mails_per_page"] + 1
