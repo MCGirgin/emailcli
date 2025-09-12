@@ -77,46 +77,66 @@ def await_input():
 
 page = 1
 
+def next_page():
+    global page
+    page += 1
+
+def previous_page():
+    global page
+    page = max(1,page - 1)
+
+def reload():
+    imap.select('"INBOX"')
+    status, messages = imap.search(None, 'ALL')
+
+def commands():
+    commands()
+    print_results()
+
+def space():
+    pass
+
+def mails_per_page(input):
+    try:
+        input = input.split()
+    except:
+        print(f"{color.RED}Unexpected command. Example usage 'mpp 5'.{color.END}")
+        print_line()
+        return print_results()
+    try:
+        data["mails_per_page"] = int(input[1])
+    except:
+        print(f"{color.RED}Unexpected command. Example usage 'mpp 5'.{color.END}")
+        print_line()
+        return print_results()
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+def logout():
+    print("Logged Out!")
+    imap.logout()
+    print_line()
+    sys.exit()
+
+actions = {
+    "x": next_page,
+    "z": previous_page,
+    "r": reload,
+    "q": logout,
+    "c": commands,
+    "": space
+}
+
 def print_results():
     global page
     global status
     global messages
     input = await_input()
     print_line()
-    if input == "x":
-        page += 1
-    elif input == "z" and page != 1:
-        page -= 1
-    elif input == "z" and page == 1:
-        pass
-    elif input == "r":
-        imap.select('"INBOX"')
-        status, messages = imap.search(None, 'ALL')
-    elif input == "c":
-        commands()
-        print_results()
-    elif input == "":
-        pass
-    elif input == "q":
-        print("Logged Out!")
-        imap.logout()
-        print_line()
-        sys.exit()
-    elif input[:3] == "mpp":
-        try:
-            input = input.split()
-        except:
-            print(f"{color.RED}Unexpected command. Example usage 'mpp 5'.{color.END}")
-            print_line()
-            return print_results()
-        try:
-            data["mails_per_page"] = int(input[1])
-        except:
-            print(f"{color.RED}Unexpected command. Example usage 'mpp 5'.{color.END}")
-            print_line()
-            return print_results()
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+    if input[:3] == "mpp":
+        mails_per_page(input)
+    elif input in actions:
+        actions[input]()
     else:
         try:
             page = int(input)
