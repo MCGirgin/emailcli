@@ -26,33 +26,41 @@ imap = imaplib.IMAP4_SSL("imap.gmail.com")
 def print_line():
     print("---------------------------")
 
-def try_login():
-    try:
-        imap.login(data["email"], password = data["imap_pass"])
-    except:
-        print(f"{color.RED}Login Credentials are incorrect. again. Make sure you are using a gmail account and a valid app password (From https://myaccount.google.com/apppasswords).{color.END}")
-        return get_data()
+tried = False
 
-def get_data():
-    mail = input("please Enter your Gmail adress: ")
-    if mail[-10:] != "@gmail.com":
-        print(f"{color.RED}The mail you just entered is not valid. Currently we support only Gmail acoounts.{color.END}")
-        return get_data()
-    data["email"] = mail
-    pw = input("Please enter your IMAP password: ")
-    if not pw:
-        return get_data()
-    data["imap_pass"] = pw
-    with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    try_login()
-
-if data["email"] == "" or data["imap_pass"] == "":
-    print(f"{color.RED}You have not entered your email credentials.{color.END}")
-    get_data()
-else:
-    try_login()
-
+def login():
+    global tried
+    while True:
+        try:
+            imap.login(data["email"], password = data["imap_pass"])
+            return
+        except:
+            if tried == False:
+                if data["email"] == "" or data["imap_pass"] == "":
+                    print(f"{color.RED}You have not entered your email credentials.{color.END}")
+                else:
+                    print(f"{color.RED}Login Credentials are incorrect. Make sure you are using a gmail account and a valid app password (From https://myaccount.google.com/apppasswords).{color.END}")
+            else:
+                print(f"{color.RED}Login failed. Please try again.{color.END}")
+            while True:
+                mail = input("please Enter your Gmail adress: ")
+                if not mail.endswith("@gmail.com"):
+                    print(f"{color.RED}The mail you just entered is invalid. Currently we support only Gmail acoounts.{color.END}")
+                else:
+                    break  
+            while True:
+                pw = input("Please enter your IMAP password: ")
+                if not pw:
+                    print(f"{color.RED}Password cannot be empty.{color.END}")
+                else:
+                    break
+            data["email"] = mail
+            data["imap_pass"] = pw
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+            tried = True
+    
+login()
 
 imap.select('"INBOX"')
 status, messages = imap.search(None, 'ALL')
